@@ -372,7 +372,7 @@ textarea{resize:vertical;min-height:72px}
       <span style="margin-left:auto;font-size:10px;font-weight:400;opacity:.8">Lista de equipos y materiales incluidos</span>
     </div>
     <div class="card-body">
-      <p style="font-size:12px;color:var(--txs);margin-bottom:14px">Agrega los ítems del suministro con su descripcion y cantidad. Aparecera como tabla en el PDF.</p>
+      <p style="font-size:12px;color:var(--txs);margin-bottom:14px">Esta tabla se completa y edita de forma <strong>manual</strong>: agrega los ítems del suministro con su descripción y cantidad. Aparecerá tal cual en el PDF.</p>
 
       <!-- Table header -->
       <div style="display:grid;grid-template-columns:1fr 90px 36px;gap:6px;margin-bottom:6px;padding:0 2px">
@@ -385,12 +385,7 @@ textarea{resize:vertical;min-height:72px}
       <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
         <button class="btn btn-p btn-sm" onclick="addSumRow()">+ Agregar item</button>
         <button class="btn btn-o btn-sm" onclick="addSumRow();addSumRow();addSumRow()">+ 3 filas</button>
-        <button class="btn btn-p btn-sm" style="margin-left:auto;background:var(--grn)" onclick="genSumIA()">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-          Generar suministro con IA
-        </button>
       </div>
-      <p id="sum-ia-st" style="font-size:12px;margin-top:8px"></p>
     </div>
   </div>
 
@@ -1561,44 +1556,6 @@ async function genDesc(){
   } finally {
     btn.innerHTML = '<i class="ti ti-stars" aria-hidden="true"></i> Generar con IA';
     btn.style.opacity = ''; btn.style.pointerEvents = '';
-  }
-}
-
-// ── AI SUPPLY GENERATION ──
-async function genSumIA(){
-  var stEl = document.getElementById('sum-ia-st');
-  if(!requireApiKey()){
-    stEl.innerHTML = '<span class="parse-err">⚠️ Configura tu API key (boton "API key" arriba) para usar esta funcion.</span>';
-    return;
-  }
-  stEl.innerHTML = '<span class="parse-loading">Generando lista de suministro...</span>';
-  try {
-    var marca  = document.getElementById('b-marca').value || '';
-    var modelo = document.getElementById('b-modelo').value || '';
-    var kw     = document.getElementById('b-kw').value || '';
-    var cfg    = nOp + '+' + nRes;
-    var tot    = nOp + nRes;
-    var dns    = document.getElementById('b-dns').value || '2"';
-
-    var prompt = 'Genera una lista de suministro tipica para un sistema booster de bombas con estos datos:\n'
-      + 'Bomba unitaria: ' + marca + ' ' + modelo + ', ' + kw + ' kW\n'
-      + 'Configuracion: ' + cfg + ' (total ' + tot + ' bombas)\nDiametro: ' + dns + '\n\n'
-      + 'Responde SOLO con JSON valido, sin markdown:\n[{"desc":"descripcion del item","qty":"cantidad"}]\n'
-      + 'Incluye: bombas, VDF si aplica, valvulas mariposa, valvulas de retencion, manifold, tablero electrico, accesorios tipicos de un booster. Maximo 15 items. Cantidades coherentes con la configuracion.';
-
-    var txt  = await callAI(prompt, 600);
-    var clean = txt.replace(/^```[a-z]*\n?/, '').replace(/```$/, '').trim();
-    var items = JSON.parse(clean);
-    supplyRows = items.map(function(i){ return {desc: i.desc||'', qty: String(i.qty||'')}; });
-    renderSum();
-    stEl.innerHTML = '<span class="parse-ok">✅ ' + supplyRows.length + ' items generados. Puedes editar la lista.</span>';
-
-  } catch(e) {
-    if(e.message==='NO_API_KEY'){
-      stEl.innerHTML = '<span class="parse-err">⚠️ Clave invalida o no configurada. Revisala en "API key" arriba.</span>';
-    } else {
-      stEl.innerHTML = '<span class="parse-err">⚠️ Error al generar: ' + e.message + '. Edita la lista manualmente.</span>';
-    }
   }
 }
 
